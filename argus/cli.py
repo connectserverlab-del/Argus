@@ -2,11 +2,16 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
-from .author import validate_brief_payload
-from .pipeline import connect, due_briefs, init_db, log_outcome, store_brief, validation_report
-from .providers import iso_utc, provider_by_name
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from argus.author import validate_brief_payload
+from argus.pipeline import connect, due_briefs, init_db, log_outcome, store_brief, validation_report
+from argus.providers import iso_utc, provider_by_name
 
 
 def now_utc() -> str:

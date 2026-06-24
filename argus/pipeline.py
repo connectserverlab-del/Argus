@@ -8,7 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
-from .providers import Provider, assert_no_lookahead, iso_utc, parse_utc
+from argus.providers import Provider, assert_no_lookahead, iso_utc, parse_utc
 
 DB_PATH = Path("argus.sqlite3")
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schema.sql"

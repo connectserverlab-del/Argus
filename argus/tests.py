@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import sqlite3
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from .pipeline import connect, due_briefs, init_db, log_outcome, store_brief, validation_report
-from .providers import FakeProvider, assert_no_lookahead
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from argus.pipeline import connect, due_briefs, init_db, log_outcome, store_brief, validation_report
+from argus.providers import FakeProvider, assert_no_lookahead
 
 
 class GuaranteesTest(unittest.TestCase):
