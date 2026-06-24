@@ -12,6 +12,7 @@ from argus.providers import Provider, assert_no_lookahead, iso_utc, parse_utc
 
 DB_PATH = Path("argus.sqlite3")
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schema.sql"
+PEGASUS_SCHEMA_PATH = Path(__file__).resolve().parent.parent / "pegasus_schema.sql"
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,8 @@ def connect(path: Path = DB_PATH) -> sqlite3.Connection:
 def init_db(path: Path = DB_PATH) -> None:
     with connect(path) as conn:
         conn.executescript(SCHEMA_PATH.read_text())
+        if PEGASUS_SCHEMA_PATH.exists():
+            conn.executescript(PEGASUS_SCHEMA_PATH.read_text())
 
 
 def store_brief(
