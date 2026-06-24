@@ -7,12 +7,12 @@ rankings, or trading workflow.
 ## Run it
 
 ```bash
-python -m argus.tests
-python -m argus.cli init
-python -m argus.cli brief AAPL --provider yfinance
-python -m argus.cli due
-python -m argus.cli outcome 1 --provider yfinance
-python -m argus.cli report
+python3 -m argus.tests
+python3 -m argus.cli init
+python3 -m argus.cli brief AAPL --provider yfinance
+python3 -m argus.cli due
+python3 -m argus.cli outcome 1 --provider yfinance
+python3 -m argus.cli report
 ```
 
 `YFinanceProvider` is price-only and not suitable for point-in-time fundamentals.
