@@ -3,9 +3,21 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime, timedelta, timezone
+from typing import Any
+
 from argus.providers import iso_utc
 from argus.pegasus import init_pegasus_db
 from argus.pegasus.study import run_event_study
+
+
+class PegasusSummary(dict):
+    """Athena-friendly summary row with both mapping and attribute access."""
+
+    def __getattr__(self, name: str) -> Any:
+        try:
+            return self[name]
+        except KeyError as exc:
+            raise AttributeError(name) from exc
 
 
 def _confidence(n: int, validity: float | None) -> str:
@@ -54,10 +66,22 @@ def compile_all(conn: sqlite3.Connection) -> dict[str, int]:
     return {"written": len(tickers), "valid": valid, "insufficient": insufficient}
 
 
-def get_summary(conn: sqlite3.Connection, ticker: str) -> dict | None:
+def get_summary(conn: sqlite3.Connection, ticker: str) -> PegasusSummary | None:
     init_pegasus_db(conn)
     row = conn.execute("SELECT * FROM pegasus_summaries WHERE ticker=? AND julianday(expires_at) > julianday('now')", (ticker.upper(),)).fetchone()
-    return dict(row) if row else None
+    return PegasusSummary(dict(row)) if row else None
+
+
+def attach_summary_to_snapshot(conn: sqlite3.Connection, ticker: str, snapshot: dict[str, Any]) -> dict[str, Any]:
+    """Return an Athena snapshot copy with the fresh Pegasus summary attached.
+
+    Missing or stale summaries are represented as ``None`` so Athena can
+    degrade gracefully without doing historical computation inline.
+    """
+    enriched = dict(snapshot)
+    summary = get_summary(conn, ticker)
+    enriched["pegasus"] = dict(summary) if summary is not None else None
+    return enriched
 
 
 def summaries_needing_refresh(conn: sqlite3.Connection) -> list[str]:

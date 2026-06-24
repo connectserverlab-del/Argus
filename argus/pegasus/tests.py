@@ -11,7 +11,7 @@ if __package__ in {None, ""}:
 from argus.pipeline import connect, init_db
 from argus.providers import FakeProvider, iso_utc
 from argus.pegasus import init_pegasus_db
-from argus.pegasus.compiler import compile_summary, get_summary
+from argus.pegasus.compiler import attach_summary_to_snapshot, compile_summary, get_summary
 from argus.pegasus.pricer import compute_event_outcomes
 from argus.pegasus.study import run_event_study
 from argus.pegasus.universe import cache_universe
@@ -69,12 +69,20 @@ class PegasusTest(unittest.TestCase):
         self.assertIsNotNone(summary)
         self.assertEqual(summary["n_layoff_events"], 11)
         self.assertIn(summary["summary_confidence"], {"low", "med", "high", "insufficient"})
+        self.assertEqual(summary.layoff_signal_validity, summary["layoff_signal_validity"])
+        snapshot = attach_summary_to_snapshot(self.conn, "AAPL", provider.snapshot("AAPL", "2020-01-01T00:00:00Z"))
+        self.assertIn("pegasus", snapshot)
+        self.assertEqual(snapshot["pegasus"]["ticker"], "AAPL")
 
     def test_compute_event_outcomes_handles_delisted_ticker(self):
         eid = self.add_event(ticker="DEAD", acc="dead")
         result = compute_event_outcomes(self.conn, eid, provider=DelistedProvider())
         self.assertEqual(result["computed"], 0)
         self.assertGreater(result["skipped"], 0)
+
+    def test_argus_init_db_applies_pegasus_schema_for_athena_integration(self):
+        row = self.conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='pegasus_summaries'").fetchone()
+        self.assertIsNotNone(row)
 
 
 if __name__ == "__main__":
