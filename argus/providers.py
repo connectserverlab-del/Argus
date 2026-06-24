@@ -91,7 +91,13 @@ class YFinanceProvider:
     """
 
     def _yf(self):
-        import yfinance as yf
+        try:
+            import yfinance as yf
+        except ModuleNotFoundError as exc:
+            raise RuntimeError(
+                "yfinance provider requires the optional 'yfinance' package; "
+                "install it with `python3 -m pip install yfinance` or use `--provider fake`"
+            ) from exc
         return yf
 
     def snapshot(self, ticker: str, as_of: str) -> dict[str, Any]:

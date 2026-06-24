@@ -19,6 +19,14 @@ def now_utc() -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    try:
+        return _main(argv)
+    except (RuntimeError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+
+def _main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="argus")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init")

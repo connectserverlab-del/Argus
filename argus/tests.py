@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sqlite3
 import sys
+from unittest import mock
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,7 +12,7 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from argus.pipeline import connect, due_briefs, init_db, log_outcome, store_brief, validation_report
-from argus.providers import FakeProvider, assert_no_lookahead
+from argus.providers import FakeProvider, YFinanceProvider, assert_no_lookahead
 
 
 class GuaranteesTest(unittest.TestCase):
@@ -76,6 +77,18 @@ class GuaranteesTest(unittest.TestCase):
         self.assertIn(row["verdict"], {"BEAT_SPY", "LAGGED_SPY", "TIED_SPY"})
         self.assertAlmostEqual(row["excess_return"], row["ticker_return"] - row["spy_return"])
         self.assertEqual(validation_report(self.conn).verdict, "INSUFFICIENT DATA")
+
+    def test_yfinance_missing_dependency_message(self) -> None:
+        real_import = __import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "yfinance":
+                raise ModuleNotFoundError("No module named 'yfinance'")
+            return real_import(name, *args, **kwargs)
+
+        with mock.patch("builtins.__import__", side_effect=fake_import):
+            with self.assertRaisesRegex(RuntimeError, "python3 -m pip install yfinance"):
+                YFinanceProvider().snapshot("AAPL", "2020-01-01T00:00:00Z")
 
 
 if __name__ == "__main__":
